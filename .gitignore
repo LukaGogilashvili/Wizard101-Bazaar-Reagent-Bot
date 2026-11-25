@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Superseded local Deimos script
+/Bazaar Reagent Buyer.txt
