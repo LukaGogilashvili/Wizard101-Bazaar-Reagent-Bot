@@ -1,6 +1,10 @@
 @echo off
 setlocal
 cd /d "%~dp0"
+if exist "runtime\python.exe" (
+    "runtime\python.exe" -B bazaar_buyer.py
+    goto done
+)
 if exist ".venv\Scripts\python.exe" (
     ".venv\Scripts\python.exe" bazaar_buyer.py
     goto done

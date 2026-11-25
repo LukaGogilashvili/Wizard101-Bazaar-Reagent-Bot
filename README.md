@@ -4,9 +4,15 @@ Use this bot to buy **any reagent sold in the Wizard101 Bazaar**, one reagent at
 
 For example, enter `Iron` to buy Iron or `Brass` to buy Brass. Pressing Enter at the name prompt chooses `Outsider Relic`, the default. You can choose a different reagent each time you start the bot. It reads names on screen and clicks the Bazaar controls using your mouse.
 
-## Installation
+## Windows download
 
-You need Windows, the English Wizard101 client, Python 3.12, and Windows PowerShell 5.1 with English text recognition (OCR) available. The buyer gets its font from your installed copy of Wizard101. Deimos is optional and can stay closed.
+Download **Wizard101-Bazaar-Buyer-windows-x64.zip** from the [latest release](https://github.com/LukaGogilashvili/Wizard101-Bazaar-Reagent-Bot/releases/latest). Right-click the ZIP, choose **Extract All**, and double-click **Start Bazaar Buyer.cmd** in the extracted folder. The ZIP includes Python and the required libraries. Keep the launcher and the `runtime` folder together.
+
+The buyer needs the English Wizard101 client, Windows PowerShell 5.1, and English text recognition (OCR). It reads the font from your installed copy of Wizard101.
+
+## Running from source
+
+Install Python 3.12 for the source version.
 
 On GitHub, choose **Code → Download ZIP** and extract it, or clone the repository with Git. Open PowerShell in the folder containing `Start Bazaar Buyer.cmd` and run these commands once.
 
