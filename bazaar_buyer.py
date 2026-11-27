@@ -6,11 +6,14 @@ from functools import lru_cache
 from io import BytesIO
 from itertools import product
 import json
+import os
 from pathlib import Path
 import re
 import struct
 import subprocess
+import sys
 import tempfile
+import threading
 import time
 import zlib
 
@@ -246,7 +249,8 @@ def calibrate(frame, cursor, reader):
 
 
 class Windows:
-    def __init__(self):
+    def __init__(self, cancelled=None):
+        self.cancelled = cancelled
         self.ui = ct.WinDLL('user32', use_last_error=True)
         self.kernel = ct.WinDLL('kernel32', use_last_error=True)
         self.ui.GetForegroundWindow.restype = wintypes.HWND
@@ -287,6 +291,8 @@ class Windows:
         return pt.x,pt.y,pt.x+rect.right,pt.y+rect.bottom
 
     def check(self):
+        if self.cancelled is not None and self.cancelled.is_set():
+            raise Stop('Session cancelled.')
         if self.ui.GetAsyncKeyState(0x79) & 0x8001:
             raise Stop('Stopped with F10.')
         if self.ui.GetForegroundWindow() != self.hwnd or self.client_bounds() != self.bounds:
@@ -648,22 +654,18 @@ class Bazaar:
                 frame,page=self.turn(NEXT,page[0]+1)
 
 
-def main():
-    print('Wizard101 Bazaar Buyer    |    F10 stops the bot at any time.\n')
-    name=input('Reagent name [Outsider Relic]: ').strip() or 'Outsider Relic'
-    if len(name)>64 or not all(c.isprintable() for c in name):
+def run_buyer(name, mode, cancelled=None):
+    if not name or len(name)>64 or not all(c.isprintable() for c in name):
         raise Stop('Use the displayed reagent name, up to 64 characters.')
-    mode=input('Press Enter to keep buying until gold runs short, or type SCAN for one pass: ').strip().lower()
     if mode not in ('','scan'):
         raise Stop('Choose Enter or SCAN.')
-    print('Open Bazaar > Buy > Reagents, select the category to watch,\n'
-          'then hover the center of that category icon and press F8. Keep the game in front.',flush=True)
+    print('Waiting for F8. In Bazaar > Buy > Reagents, hover over the selected category icon.',flush=True)
     ui32=ct.windll.user32
     while not ui32.GetAsyncKeyState(0x77)&0x8000:
-        if ui32.GetAsyncKeyState(0x79)&0x8000:
+        if (cancelled is not None and cancelled.is_set()) or ui32.GetAsyncKeyState(0x79)&0x8000:
             raise Stop('Cancelled.')
         time.sleep(.03)
-    ui=Windows()
+    ui=Windows(cancelled)
     pt=wintypes.POINT()
     ui.ui.GetCursorPos(ct.byref(pt))
     cursor=pt.x-ui.bounds[0],pt.y-ui.bounds[1]
@@ -676,6 +678,27 @@ def main():
     tab = min(REAGENT_TABS,key=lambda p: abs(ui.layout.point(*p)[0]-cursor[0]))
     print(f'Watching the chosen reagent tab for {name}.',flush=True)
     Bazaar(ui,reader,name,mode=='scan',tab).run()
+
+
+def main():
+    if len(sys.argv)==3 and sys.argv[1]=='--gui-worker' and sys.argv[2] in ('buy','scan'):
+        cancelled = threading.Event()
+
+        def watch_parent():
+            # The GUI closes its pipe on Stop or exit, including unexpected exits.
+            try:
+                os.read(sys.stdin.fileno(), 1)
+            finally:
+                cancelled.set()
+
+        threading.Thread(target=watch_parent, daemon=True).start()
+        run_buyer(os.environ.get('WIZARD101_BUYER_REAGENT','').strip(),
+                  'scan' if sys.argv[2]=='scan' else '', cancelled)
+        return
+    print('Wizard101 Bazaar Buyer    |    F10 stops the bot at any time.\n')
+    name=input('Reagent name [Outsider Relic]: ').strip() or 'Outsider Relic'
+    mode=input('Press Enter to keep buying until gold runs short, or type SCAN for one pass: ').strip().lower()
+    run_buyer(name, mode)
 
 
 if __name__=='__main__':

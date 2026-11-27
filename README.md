@@ -6,7 +6,9 @@ For example, enter `Iron` to buy Iron or `Brass` to buy Brass. Pressing Enter at
 
 ## Windows download
 
-Download **Wizard101-Bazaar-Buyer-windows-x64.zip** from the [latest release](https://github.com/LukaGogilashvili/Wizard101-Bazaar-Reagent-Bot/releases/latest). Right-click the ZIP, choose **Extract All**, and double-click **Start Bazaar Buyer.cmd** in the extracted folder. The ZIP includes Python and the required libraries. Keep the launcher and the `runtime` folder together.
+Download [Wizard101-Bazaar-Buyer.exe](https://github.com/LukaGogilashvili/Wizard101-Bazaar-Reagent-Bot/releases/latest/download/Wizard101-Bazaar-Buyer.exe) for 64-bit Windows. Double-click it to open the control window. The single file includes Python and the buyer’s libraries and runs without an installer. It unpacks its runtime into a temporary folder when you start a session and removes it when you close the window normally.
+
+For the command-line interface, download **Wizard101-Bazaar-Buyer-windows-x64.zip** from the [latest release](https://github.com/LukaGogilashvili/Wizard101-Bazaar-Reagent-Bot/releases/latest). Extract the ZIP and open **Start Bazaar Buyer.cmd**.
 
 The buyer needs the English Wizard101 client, Windows PowerShell 5.1, and English text recognition (OCR). It reads the font from your installed copy of Wizard101.
 
@@ -26,16 +28,16 @@ If your Python installation provides `python` instead of `py`, use `python -m ve
 ## Buy a reagent
 
 1. In Wizard101, open the Bazaar, go to **Buy → Reagents**, and select the category containing your reagent. For example, **Outsider Relic** appears under **World Drop**, the red hand icon. The bot watches the category you choose.
-2. Double-click **Start Bazaar Buyer.cmd**. Type the reagent’s full name and press **Enter**. Capitalization is ignored.
-3. At the next prompt, choose how to run it.
+2. Open **Wizard101-Bazaar-Buyer.exe** and type the reagent’s full name. Capitalization is ignored.
+3. Choose a mode and click **Start**. In the command-line version, enter the name at the first prompt and choose the mode at the second prompt.
 
-   | Input | Behavior |
+   | Mode | Behavior |
    | --- | --- |
-   | **Enter** | Buy matching stock, confirm its gold price, and keep watching the category. |
-   | `SCAN` | Make one pass. Select the first match and stop, or report that the category has no match. No gold is spent. |
+   | **Buy continuously** (CLI: Enter) | Buy matching stock, confirm its gold price, and keep watching the category. |
+   | **Scan once** (CLI: `SCAN`) | Make one pass. Select the first match and stop, or report that the category has no match. No gold is spent. |
 
 4. Switch back to Wizard101, hover over the **center of the category icon you selected**, and press **F8** to start.
-5. Keep Wizard101 in front. Press **F10** to stop. Switching applications, moving the window, or resizing it also ends the run.
+5. Keep Wizard101 in front. Press **F10** to stop in-game, then switch back to the control window to read the session log or start another run. **Stop** in the control window also cancels a session, including while it is waiting for F8. Switching applications, moving the game window, or resizing it during a scan or purchase ends the run.
 
 To start the same prompts from PowerShell, run `.\.venv\Scripts\python.exe bazaar_buyer.py`.
 
@@ -77,3 +79,14 @@ $env:WIZARD101_DIR = 'D:\Games\Wizard101'
 ```
 
 During normal play, the buyer finds the installation from the running game window.
+
+## Building the Windows release
+
+On x64 Windows with Python 3.12 and the Windows .NET Framework C# compiler, run the following from the repository folder. The build downloads checksum-verified binaries and writes the GUI executable and console ZIP to `dist`.
+
+```powershell
+py -3.12 tools/build_release.py
+.\tests\smoke_gui.ps1 -Executable .\dist\Wizard101-Bazaar-Buyer.exe
+```
+
+The GUI smoke test opens an isolated copy, exercises the controls for both modes, and closes the session before F8. Wizard101 can stay closed.

@@ -1,7 +1,9 @@
 """Build the portable Windows x64 ZIP with hash-verified upstream binaries."""
 
 import hashlib
+import os
 import shutil
+import subprocess
 import sys
 import tempfile
 import urllib.request
@@ -56,7 +58,16 @@ def build(output):
             shutil.copyfile(ROOT / name, target)
         archive = Path(shutil.make_archive(str(work / "Wizard101-Bazaar-Buyer-windows-x64"),
                                            "zip", work, app.name))
+        compiler = Path(os.environ["WINDIR"]) / "Microsoft.NET/Framework64/v4.0.30319/csc.exe"
+        exe = work / "Wizard101-Bazaar-Buyer.exe"
+        subprocess.run([str(compiler), "/nologo", "/target:winexe", "/platform:x64", "/optimize+",
+                        "/reference:System.Windows.Forms.dll", "/reference:System.Drawing.dll",
+                        "/reference:System.IO.Compression.dll", "/reference:System.IO.Compression.FileSystem.dll",
+                        "/resource:" + str(archive) + ",buyer.zip", "/out:" + str(exe),
+                        str(ROOT / "gui/BazaarBuyer.cs")], check=True)
+        exe.replace(output / exe.name)
         archive.replace(output / archive.name)
+        print(output / exe.name)
         print(output / archive.name)
 
 
